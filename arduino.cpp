@@ -2,13 +2,15 @@
 // Created by lilian on 30/04/2024.
 //
 #include <DHT.h>
+#include <DHT.h>
 #include <SPI.h>
 #include <MFRC522.h>
 #include <Keypad.h>
 
-// Configuration des pins pour les capteurs DHT et PIR
+// Configuration des pins pour les capteurs DHT et PIR et de l'alarme
 const int pinDHT = 2; // Pin où le capteur DHT22 est connecté
 const int pinPIR = 3; // Pin où le capteur de mouvement PIR est connecté
+const int pinAlarme = 7; // Pin où l'alarme est connectée
 
 // Configuration des pins pour le module RFID
 const int RST_PIN = 9; // Pin de réinitialisation du module RFID
@@ -37,17 +39,22 @@ const int seuilVariationHum = 10; // Seuil de variation d'humidité (en pourcent
 // Variables pour stocker les dernières mesures valides
 float derniereTemp = 0.0;
 float derniereHum = 0.0;
+bool alarmeActive = false; // La variable pour vérifier si l'alarme est activée
 bool accesLegitime = false; // La variable pour vérifier l'accès légitime au coffre
 
 // Création de l'instance du capteur DHT et du module RFID
 MFRF522 rfid(SS_PIN, RST_PIN);
 DHT dht(pinDHT, DHT22);
+IRrecv irrecv(pinIR);
+decode_results resultats;
 
 void setup() {
     Serial.begin(9600);
     SPI.begin();
     rfid.PCD_Init();
     dht.begin();
+    irrecv.enableIRIn(); // Démarrer la réception IR
+    pinMode(pinAlarme, OUTPUT);
     pinMode(pinPIR, INPUT);
 }
 
@@ -62,6 +69,13 @@ void loop() {
         envoyerAlerte("Accès non autorisé!");
     }
     surveillerCapteurs();
+    if (irrecv.decode(&resultats)) {
+        if (resultats.value == 0xFFA25D) { // Code de la télécommande IR
+            alarmeActive = false;
+            digitalWrite(pinAlarme, LOW); // Désactiver l'alarme
+            irrecv.resume(); // Recevoir la prochaine valeur
+        }
+    }
 }
 
 bool authentificationRFID() {
@@ -107,6 +121,8 @@ void surveillerCapteurs() {
 
     // Vérifier les conditions d'alerte
     if (!accesLegitime && (abs(temperature - derniereTemp) > seuilVariationTemp || abs(humidite - derniereHum) > seuilVariationHum || mouvement)) {
+        alarmeActive = true;
+        digitalWrite(pinAlarme, HIGH); // Activer l'alarme
         if (mouvement) {
             envoyerAlerte("Mouvement détecté sans accès légitime!");
         }
