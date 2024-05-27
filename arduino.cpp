@@ -1,9 +1,3 @@
-<<<<<<< Updated upstream
-//
-// Created by lilian on 30/04/2024.
-//
-=======
->>>>>>> Stashed changes
 #include <DHT.h>
 #include <SPI.h>
 #include <MFRC522.h>
@@ -52,19 +46,11 @@ DHT dht(pinDHT, DHT22);
 
 void setup() {
     Serial.begin(9600);
-<<<<<<< Updated upstream
     servo.write(70); 
     SPI.begin();
     rfid.PCD_Init();
     dht.begin();
     servo.attach(3); 
-=======
-    servo.write(70);
-    SPI.begin();
-    rfid.PCD_Init();
-    dht.begin();
-    servo.attach(3);
->>>>>>> Stashed changes
     pinMode(pinAlarme, OUTPUT);
     pinMode(pinPIR, INPUT);
 }
@@ -73,30 +59,25 @@ void loop() {
     if (authentificationRFID()) {
         Serial.println("RFID validé, veuillez entrer votre code PIN:");
         if (verificationPIN()) {
-            envoyerAlerte("Accès autorisé!");
+            afficherMessage("Accès autorisé!");
         }
-<<<<<<< Updated upstream
-=======
     } else {
-        envoyerAlerte("Accès non autorisé!");
+        afficherMessage("Accès non autorisé!");
         surveillerCapteurs();
->>>>>>> Stashed changes
     }
 }
 
+/**
+* Fonction pour l'authentification RFID en comparant le code UID de la carte avec le code autorisé.
+* Si l'authentification est réussie, l'accès est autorisé.
+* @return true si l'authentification est réussie, false sinon.
+*/
 bool authentificationRFID() {
 
     if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
-<<<<<<< Updated upstream
-      envoyerAlerte("Accès non autorisé");
+      afficherMessage("Accès non autorisé");
       return false;
     }
-
-=======
-        envoyerAlerte("Accès non autorisé");
-        return false;
-    }
->>>>>>> Stashed changes
 
     String ID = "";
     for (byte i = 0; i < rfid.uid.size; i++) {
@@ -108,6 +89,10 @@ bool authentificationRFID() {
     return ID == codeUIDcarte;
 }
 
+/**
+* Fonction pour la vérification du code PIN saisi par l'utilisateur. 
+* @return true si le code PIN est correct, false sinon.
+*/
 bool verificationPIN() {
     String codeSaisi = "";
     char touche = clavier.getKey();
@@ -121,31 +106,31 @@ bool verificationPIN() {
     return codeSaisi == code4chiffre;
 }
 
+/**
+* Fonction pour surveiller les capteurs de température, d'humidité et de mouvement.
+* Si les conditions d'alerte sont remplies, l'alarme est activée.
+* Si l'accès est légitime, l'alarme est désactivée.
+*/
 void surveillerCapteurs() {
     float humidite = dht.readHumidity(); // Lire l'humidité
     float temperature = dht.readTemperature(); // Lire la température
-<<<<<<< Updated upstream
 
-    envoyerDataAffichage(temperature, humidite);
-
-=======
->>>>>>> Stashed changes
     int mouvement = digitalRead(pinPIR); // Lire l'état du capteur de mouvement
 
-    envoyerDataAffichage(temperature, humidite, mouvement);
+    afficherCapteurData(temperature, humidite, mouvement);
 
     // Vérifier les conditions d'alerte
     if (!accesLegitime && (abs(temperature - derniereTemp) > seuilVariationTemp || abs(humidite - derniereHum) > seuilVariationHum || mouvement == HIGH)) {
         alarmeActive = true;
         digitalWrite(pinAlarme, HIGH); // Activer l'alarme
         if (mouvement) {
-            envoyerAlerte("Mouvement détecté sans accès légitime!");
+            afficherMessage("Mouvement détecté sans accès légitime!");
         }
         if (abs(temperature - derniereTemp) > seuilVariationTemp) {
-            envoyerAlerte("Changement brusque de température détecté!");
+            afficherMessage("Changement brusque de température détecté!");
         }
         if (abs(humidite - derniereHum) > seuilVariationHum) {
-            envoyerAlerte("Changement brusque d'humidité détecté!");
+            afficherMessage("Changement brusque d'humidité détecté!");
         }
     } else {
         alarmeActive = false;
@@ -156,23 +141,22 @@ void surveillerCapteurs() {
     derniereHum = humidite;
 }
 
-<<<<<<< Updated upstream
-void envoyerDataAffichage(float temperature, float humidite) {
-  Serial.println(temperature);
-  Serial.println(humidite);
-}
-
-void envoyerAlerte(String message) {
-  Serial.println(message);
-}
-=======
-void envoyerDataAffichage(float temperature, float humidite, int mouvement) {
+/**
+* Fonction pour envoyer les données de température et d'humidité à l'interface d'affichage.
+* @param temperature - La température actuelle
+* @param humidite - L'humidité actuelle
+* @param mouvement - L'état du capteur de mouvement
+*/
+void afficherCapteurData(float temperature, float humidite, int mouvement) {
     Serial.println(temperature);
     Serial.println(humidite);
     Serial.println(mouvement);
 }
 
-void envoyerAlerte(String message) {
+/**
+* Fonction pour afficher les messages d'alerte sur le moniteur série.
+* @param message - Le message d'alerte à afficher
+*/
+void afficherMessage(String message) {
     Serial.println(message);
 }
->>>>>>> Stashed changes
