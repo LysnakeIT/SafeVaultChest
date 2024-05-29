@@ -30,7 +30,7 @@ String codeUIDcarte = " D3 1C D0 24"; // Code UID de la carte autorisée
 String code4chiffre = "1234"; // Code à 4 chiffres pour l'authentification
 
 // Configuration des seuils de variation de température et d'humidité
-const int seuilVariationTemp = 15; // Seuil de variation de température (en degrés Celsius)
+const int seuilVariationTemp = 30; // Seuil de variation de température (en degrés Celsius)
 const int seuilVariationHum = 15; // Seuil de variation d'humidité (en pourcentage)
 
 // Variables pour stocker les dernières mesures valides
@@ -50,7 +50,7 @@ void setup() {
     SPI.begin();
     rfid.PCD_Init();
     dht.begin();
-    servo.attach(3); 
+    servo.attach(5); 
     pinMode(pinAlarme, OUTPUT);
     pinMode(pinPIR, INPUT);
 }
@@ -60,6 +60,7 @@ void loop() {
         Serial.println("RFID validé, veuillez entrer votre code PIN:");
         if (verificationPIN()) {
             afficherMessage("Accès autorisé!");
+            servo.write(0); // Ouvrir le coffre
         }
     } else {
         afficherMessage("Accès non autorisé!");
@@ -123,6 +124,7 @@ void surveillerCapteurs() {
     if (!accesLegitime && (abs(temperature - derniereTemp) > seuilVariationTemp || abs(humidite - derniereHum) > seuilVariationHum || mouvement == HIGH)) {
         alarmeActive = true;
         digitalWrite(pinAlarme, HIGH); // Activer l'alarme
+        servo.write(70); // Fermer le coffre
         if (mouvement) {
             afficherMessage("Mouvement détecté sans accès légitime!");
         }
