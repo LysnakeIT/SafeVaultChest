@@ -46,11 +46,7 @@ DHT dht(pinDHT, DHT11);
 
 void setup() {
     Serial.begin(9600);
-<<<<<<< Updated upstream
-    servo.write(120); 
-=======
     servo.write(120); // Position de fermeture du servo 
->>>>>>> Stashed changes
     SPI.begin();
     rfid.PCD_Init();
     dht.begin();
@@ -61,15 +57,6 @@ void setup() {
 
 void loop() {
     delay(2000); // Délai entre les mesures
-    afficherMessage("Badge RFID requis");
-    if (authentificationRFID()) {
-        Serial.println("RFID validé, veuillez entrer votre code PIN:");
-        if (verificationPIN()) {
-            afficherMessage("Accès autorisé!");
-            servo.write(20); // Ouvrir le coffre
-        }
-    } else {
-=======
     afficherMessage("Action requise : Passez votre badge RFID");
     if (authentificationRFID() || accesLegitime) {
         Serial.println("RFID validé, veuillez entrer votre code PIN");
@@ -79,7 +66,6 @@ void loop() {
             accesLegitime = true;
         }
     } else if (!accesLegitime) {
->>>>>>> Stashed changes
         surveillerCapteurs();
     }
 }
@@ -90,16 +76,8 @@ void loop() {
 * @return true si l'authentification est réussie, false sinon.
 */
 bool authentificationRFID() {
-<<<<<<< Updated upstream
-
-    if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
-      //afficherMessage("Accès non autorisé");
-      return false;
-    }
-=======
     if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial())
         return false;
->>>>>>> Stashed changes
 
     String ID = "";
     for (byte i = 0; i < rfid.uid.size; i++) {
@@ -154,17 +132,11 @@ void surveillerCapteurs() {
     if (temperature > seuilMaximumTemp || humidite > seuilMaximumHum || (seuilMouvementPrecedent == LOW && mouvement == HIGH)) {
         alarmeActive = true;
         digitalWrite(pinAlarme, HIGH); // Activer l'alarme
-<<<<<<< Updated upstream
-        servo.write(120); // Fermer le coffre
-        if (mouvement) {
-            afficherMessage("Mouvement détecté sans accès légitime!");
-=======
         for (int i = 0; i < 10; i++) {
             tone(pinAlarme, 1000); // Activer le buzzer
             delay(500);
             noTone(pinAlarme); // Désactiver le buzzer
             delay(500);
->>>>>>> Stashed changes
         }
         servo.write(120); // Fermer le coffre
         if (seuilMouvementPrecedent == LOW && mouvement == HIGH) {
