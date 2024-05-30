@@ -46,7 +46,7 @@ DHT dht(pinDHT, DHT22);
 
 void setup() {
     Serial.begin(9600);
-    servo.write(70); 
+    servo.write(120); 
     SPI.begin();
     rfid.PCD_Init();
     dht.begin();
@@ -56,14 +56,15 @@ void setup() {
 }
 
 void loop() {
+    delay(2000); // Délai entre les mesures
+    afficherMessage("Badge RFID requis");
     if (authentificationRFID()) {
         Serial.println("RFID validé, veuillez entrer votre code PIN:");
         if (verificationPIN()) {
             afficherMessage("Accès autorisé!");
-            servo.write(0); // Ouvrir le coffre
+            servo.write(20); // Ouvrir le coffre
         }
     } else {
-        afficherMessage("Accès non autorisé!");
         surveillerCapteurs();
     }
 }
@@ -76,7 +77,7 @@ void loop() {
 bool authentificationRFID() {
 
     if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
-      afficherMessage("Accès non autorisé");
+      //afficherMessage("Accès non autorisé");
       return false;
     }
 
@@ -124,7 +125,7 @@ void surveillerCapteurs() {
     if (!accesLegitime && (abs(temperature - derniereTemp) > seuilVariationTemp || abs(humidite - derniereHum) > seuilVariationHum || mouvement == HIGH)) {
         alarmeActive = true;
         digitalWrite(pinAlarme, HIGH); // Activer l'alarme
-        servo.write(70); // Fermer le coffre
+        servo.write(120); // Fermer le coffre
         if (mouvement) {
             afficherMessage("Mouvement détecté sans accès légitime!");
         }
