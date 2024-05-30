@@ -5,9 +5,9 @@
 #include <Servo.h>
 
 // Configuration des pins pour les capteurs DHT et PIR et de l'alarme
-const int pinDHT = 2; // Pin où le capteur DHT22 est connecté
+const int pinDHT = 2; // Pin où le capteur DHT11 est connecté
 const int pinPIR = 3; // Pin où le capteur de mouvement PIR est connecté
-const int pinAlarme = 7; // Pin où l'alarme est connectée
+const int pinAlarme = 7; // Pin où le buzzer est connecté
 
 // Configuration des pins pour le module RFID
 const int RST_PIN = 8; // Pin de réinitialisation du module RFID
@@ -27,26 +27,30 @@ byte pinColonnesClavier[colonneClavier] = {26, 27, 28, 29};  // Pins des colonne
 Keypad clavier = Keypad(makeKeymap(touchesClavier), pinLignesClavier, pinColonnesClavier, ligneClavier, colonneClavier);
 
 String codeUIDcarte = " D3 1C D0 24"; // Code UID de la carte autorisée
-String code4chiffre = "1234"; // Code à 4 chiffres pour l'authentification
+String code4chiffre = "1234"; // Code à 4 chiffres pour l'authentification PIN
+String CLOSE_CODE = "9999";  // Code PIN pour refermer le coffre
 
 // Configuration des seuils de variation de température et d'humidité
-const int seuilVariationTemp = 30; // Seuil de variation de température (en degrés Celsius)
-const int seuilVariationHum = 15; // Seuil de variation d'humidité (en pourcentage)
+const float seuilMaximumTemp = 25.0; // Seuil de variation de température (en degrés Celsius)
+const float seuilMaximumHum = 60.0; // Seuil de variation d'humidité (en pourcentage)
 
-// Variables pour stocker les dernières mesures valides
-float derniereTemp = 0.0;
-float derniereHum = 0.0;
+int seuilMouvementPrecedent = LOW; // Etat précédent du capteur de mouvement
+
 bool alarmeActive = false; // La variable pour vérifier si l'alarme est activée
 bool accesLegitime = false; // La variable pour vérifier l'accès légitime au coffre
 
-// Création de l'instance du capteur DHT et du module RFID
+// Création de l'instance du capteur DHT, du module RFID et du servo-moteur
 Servo servo;
 MFRC522 rfid(SS_PIN, RST_PIN);
-DHT dht(pinDHT, DHT22);
+DHT dht(pinDHT, DHT11);
 
 void setup() {
     Serial.begin(9600);
+<<<<<<< Updated upstream
     servo.write(120); 
+=======
+    servo.write(120); // Position de fermeture du servo 
+>>>>>>> Stashed changes
     SPI.begin();
     rfid.PCD_Init();
     dht.begin();
@@ -65,6 +69,17 @@ void loop() {
             servo.write(20); // Ouvrir le coffre
         }
     } else {
+=======
+    afficherMessage("Action requise : Passez votre badge RFID");
+    if (authentificationRFID() || accesLegitime) {
+        Serial.println("RFID validé, veuillez entrer votre code PIN");
+        if (verificationPIN()) {
+            afficherMessage("L'accès est autorisé, ouverture du coffre.");
+            servo.write(20); // Ouvrir le coffre
+            accesLegitime = true;
+        }
+    } else if (!accesLegitime) {
+>>>>>>> Stashed changes
         surveillerCapteurs();
     }
 }
@@ -75,11 +90,16 @@ void loop() {
 * @return true si l'authentification est réussie, false sinon.
 */
 bool authentificationRFID() {
+<<<<<<< Updated upstream
 
     if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
       //afficherMessage("Accès non autorisé");
       return false;
     }
+=======
+    if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial())
+        return false;
+>>>>>>> Stashed changes
 
     String ID = "";
     for (byte i = 0; i < rfid.uid.size; i++) {
@@ -93,11 +113,13 @@ bool authentificationRFID() {
 
 /**
 * Fonction pour la vérification du code PIN saisi par l'utilisateur. 
-* @return true si le code PIN est correct, false sinon.
+* Si le code PIN est correct, l'accès est autorisé.
+* Si le code de fermeture est saisi, le coffre est fermé.
+* @return true si le code PIN est correct, fasle si le code de fermeture est saisi et false si le code PIN est incorrect.
 */
 bool verificationPIN() {
     String codeSaisi = "";
-    char touche = clavier.getKey();
+    char touche = clavier.getKey(); // Lire la touche du clavier
     while (touche != '#') { // Lire jusqu'à ce que '#' soit pressé
         if (touche != NO_KEY && touche != '#') {
             codeSaisi += touche;
@@ -105,7 +127,17 @@ bool verificationPIN() {
         touche = clavier.getKey();
         delay(100); // Délai pour gérer la vitesse de saisie
     }
+    if (accesLegitime && codeSaisi == CLOSE_CODE) {
+        fermerCoffre();
+        return false;
+    }
     return codeSaisi == code4chiffre;
+}
+
+void fermerCoffre() {
+    servo.write(120); // Position de fermeture du servo
+    accesLegitime = false; // Réinitialiser l'accès légitime
+    afficherMessage("Coffre fermé et sécurisé.");
 }
 
 /**
@@ -116,44 +148,38 @@ bool verificationPIN() {
 void surveillerCapteurs() {
     float humidite = dht.readHumidity(); // Lire l'humidité
     float temperature = dht.readTemperature(); // Lire la température
-
     int mouvement = digitalRead(pinPIR); // Lire l'état du capteur de mouvement
 
-    afficherCapteurData(temperature, humidite, mouvement);
-
     // Vérifier les conditions d'alerte
-    if (!accesLegitime && (abs(temperature - derniereTemp) > seuilVariationTemp || abs(humidite - derniereHum) > seuilVariationHum || mouvement == HIGH)) {
+    if (temperature > seuilMaximumTemp || humidite > seuilMaximumHum || (seuilMouvementPrecedent == LOW && mouvement == HIGH)) {
         alarmeActive = true;
         digitalWrite(pinAlarme, HIGH); // Activer l'alarme
+<<<<<<< Updated upstream
         servo.write(120); // Fermer le coffre
         if (mouvement) {
             afficherMessage("Mouvement détecté sans accès légitime!");
+=======
+        for (int i = 0; i < 10; i++) {
+            tone(pinAlarme, 1000); // Activer le buzzer
+            delay(500);
+            noTone(pinAlarme); // Désactiver le buzzer
+            delay(500);
+>>>>>>> Stashed changes
         }
-        if (abs(temperature - derniereTemp) > seuilVariationTemp) {
-            afficherMessage("Changement brusque de température détecté!");
+        servo.write(120); // Fermer le coffre
+        if (seuilMouvementPrecedent == LOW && mouvement == HIGH) {
+            afficherMessage("Mouvement détecté sans accès légitime !");
         }
-        if (abs(humidite - derniereHum) > seuilVariationHum) {
-            afficherMessage("Changement brusque d'humidité détecté!");
+        if (temperature > seuilMaximumTemp) {
+            afficherMessage("Changement brusque de température détecté !");
+        }
+        if (humidite > seuilMaximumHum) {
+            afficherMessage("Changement brusque d'humidité détecté !");
         }
     } else {
         alarmeActive = false;
         digitalWrite(pinAlarme, LOW); // Désactiver l'alarme
     }
-
-    derniereTemp = temperature;
-    derniereHum = humidite;
-}
-
-/**
-* Fonction pour envoyer les données de température et d'humidité à l'interface d'affichage.
-* @param temperature - La température actuelle
-* @param humidite - L'humidité actuelle
-* @param mouvement - L'état du capteur de mouvement
-*/
-void afficherCapteurData(float temperature, float humidite, int mouvement) {
-    Serial.println(temperature);
-    Serial.println(humidite);
-    Serial.println(mouvement);
 }
 
 /**
