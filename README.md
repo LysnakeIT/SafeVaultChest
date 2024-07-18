@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="https://cdn.discordapp.com/attachments/1220746618106548305/1220761790460199014/DALLE_2024-03-22_16.51.04_-_Imagine_a_sleek_and_modern_safe_vault_incorporating_the_essence_of_Arduino_technology._This_safe_named_SafeVaultChest_is_designed_with_a_visible_Ar.webp?ex=66535a83&is=66520903&hm=5b316bd6037fb5d45ca6dc6ef897f27a2ba70f266fb0d1ea897c01054ccf96eb&" alt="SVC" width="200"></a>
+  <img src="https://github.com/LysnakeIT/SafeVaultChest/blob/main/Ressources/Images/SVC_logo.png" alt="SVC" width="200"></a>
   <br>
   SafeVaultChest
   <br>

@@ -106,12 +106,15 @@ bool verificationPIN() {
         delay(100); // Délai pour gérer la vitesse de saisie
     }
     if (accesLegitime && codeSaisi == CLOSE_CODE) {
-        fermerCoffre();
+        fermerCoffre(); // Fermer le coffre si le code de fermeture est saisi
         return false;
     }
     return codeSaisi == code4chiffre;
 }
 
+/**
+ * Fonction pour fermer le coffre en cas de code de fermeture saisi.
+ */
 void fermerCoffre() {
     servo.write(120); // Position de fermeture du servo
     accesLegitime = false; // Réinitialiser l'accès légitime
